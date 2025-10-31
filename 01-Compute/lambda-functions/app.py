@@ -24,8 +24,8 @@ def lambda_handler(event, context):
         'Age': np.random.randint(18, 65, size=row_count),
         'City': [fake.city() for _ in range(row_count)],
         'Email':emails,
-        'Order Quantity': np.random.randint(1, 10, size=row_count),
-        'Price': np.round(np.random.uniform(10.0, 100.0, size=row_count), 2)
+        'Order Quantity': np.random.randint(0, 10, size=row_count),
+        'Price': np.round(np.random.uniform(0.0, 100.0, size=row_count), 2)
     }
 
 
