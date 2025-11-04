@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM App with two Python Lambdas for S3 + ETL
+
+Globals:
+  Function:
+    Runtime: python3.13
+    Timeout: 300
+    MemorySize: 256
+
+Resources:
+  # -----------------------------
+  # 2️⃣ Lambda: Generate Sample File
+  # -----------------------------
+  GenerateSampleFileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: generate_s3.lambda_handler
+      CodeUri: 1_producer_lambda/
+      Policies:
+        - AmazonS3FullAccess   # Allow read/write to S3
+      Environment:
+        Variables:
+          BUCKET_NAME: my-lambda-stack-kelvinyau-2025
+      Events:
+        ScheduledEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)  # Runs once daily, adjust as needed
+        ApiTrigger:
+          Type: Api
+          Properties:
+            Path: /generate
+            Method: get
+
+
+  # -----------------------------
+  # 3️⃣ Lambda: ETL Process
+  # -----------------------------
+  ETLProcessFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: etl_s3_to_rds.lambda_handler
+      CodeUri: 2_etl_lambda/
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:PutObject
+              Resource: "arn:aws:s3:::my-lambda-stack-kelvinyau-2025/*"
+            - Effect: Allow
+              Action:
+                - rds-db:connect
+              Resource: "arn:aws:rds:us-east-2:896880369126:db:database-1"  # Replace with your DB ARN for production
+      Environment:
+        Variables:
+          BUCKET_NAME: my-lambda-stack-kelvinyau-2025
+          DB_URL: "database-1.cr4uuou0e8u3.us-east-2.rds.amazonaws.com" # e.g. postgresql+psycopg2://user:pass@host:port/dbname
